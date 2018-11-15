@@ -1,5 +1,5 @@
 import csv
-import numpy
+import numpy as np
 import collections
 
 '''load demographics data'''
@@ -51,11 +51,23 @@ def filter_cancer(demo_profiles, egm_profiles):
             cancer[patient] = 1
     return cancer
 
+def dict_to_numpy(d):
+    dlist = d.items()
+    dlist.sort()
+    l1, l2 = zip(*dlist)
+    l1_np = np.array(l1)
+    l2_np = np.array(l2)
+    
+    return l1_np, l2_np
+
 def main():
     demo_profiles = load_demos('data/demographic 5_5_15.txt')
     egm_profiles = load_EGM('data/EGM_preprocessed.txt')
     intersect_dicts(demo_profiles, egm_profiles)
-    cancer_onehot = filter_cancer(demo_profiles, egm_profiles)
+    cancer_dict = filter_cancer(demo_profiles, egm_profiles)
+    patients, egm_matrix =  dict_to_numpy(egm_profiles)
+    patients, cancer_onehot = dict_to_numpy(cancer_dict)
+
 
 if __name__ == '__main__':
     main()
