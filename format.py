@@ -14,14 +14,6 @@ def load_demos(demo_file):
 
     return demo_profiles
 
-def intersect_dicts(dict1, dict2):
-    for key,v in dict1.items():
-        if not key in dict2:
-            dict1.pop(key, None)
-    for key,v in dict2.items():
-        if not key in dict1:
-            dict2.pop(key, None)
-
 '''load EGM data'''
 def load_EGM(egm_file):
     egm_profiles = collections.defaultdict(list)
@@ -35,20 +27,35 @@ def load_EGM(egm_file):
 
     return egm_profiles
 
+'''weed out patients not in both datasets'''
+def intersect_dicts(dict1, dict2):
+    for key in list(dict1):
+        if not key in dict2:
+            dict1.pop(key, None)
+    for key in list(dict2):
+        if not key in dict1:
+            dict2.pop(key, None)
+
+'''weed out patients with BRCA and return one-hot for cancer'''
+def filter_cancer(demo_profiles, egm_profiles):
+    cancer = {}
+    for patient, profile in demo_profiles.items():
+        #filter out BRCA
+        if profile[10] == "BRCA":
+            demo_profiles.pop(patient, None)
+            egm_profiles.pop(patient, None)
+        #build one_hot dict
+        elif profile[10] == "CO":
+            cancer[patient] = 0
+        else:
+            cancer[patient] = 1
+    return cancer
+
 def main():
     demo_profiles = load_demos('data/demographic 5_5_15.txt')
     egm_profiles = load_EGM('data/EGM_preprocessed.txt')
-
-    count = 0
-    for patient in egm_profiles:
-        if patient in demo_profiles:
-            count +=1
-    print len (demo_profiles)
-    print len (egm_profiles)
-    print count
     intersect_dicts(demo_profiles, egm_profiles)
-    print len (demo_profiles)
-    print len (egm_profiles)
+    cancer_onehot = filter_cancer(demo_profiles, egm_profiles)
 
 if __name__ == '__main__':
     main()
