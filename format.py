@@ -39,7 +39,8 @@ def intersect_dicts(dict1, dict2):
 '''weed out patients with BRCA and return one-hot for cancer'''
 def filter_cancer(demo_profiles, egm_profiles):
     cancer = {}
-    for patient, profile in demo_profiles.items():
+    for patient in list(demo_profiles):
+        profile = demo_profiles[patient]
         #filter out BRCA
         if profile[10] == "BRCA":
             demo_profiles.pop(patient, None)
@@ -52,7 +53,7 @@ def filter_cancer(demo_profiles, egm_profiles):
     return cancer
 
 def dict_to_numpy(d):
-    dlist = d.items()
+    dlist = list(d.items())
     dlist.sort()
     l1, l2 = zip(*dlist)
     l1_np = np.array(l1)
@@ -60,13 +61,17 @@ def dict_to_numpy(d):
     
     return l1_np, l2_np
 
-def main():
+def get_data():
     demo_profiles = load_demos('data/demographic 5_5_15.txt')
     egm_profiles = load_EGM('data/EGM_preprocessed.txt')
     intersect_dicts(demo_profiles, egm_profiles)
     cancer_dict = filter_cancer(demo_profiles, egm_profiles)
     patients, egm_matrix =  dict_to_numpy(egm_profiles)
     patients, cancer_onehot = dict_to_numpy(cancer_dict)
+    return patients, egm_matrix, cancer_onehot
+
+def  main():
+    patients, egm_matrix, cancer_onehot = get_data()
 
 
 if __name__ == '__main__':
