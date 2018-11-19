@@ -57,7 +57,7 @@ def dict_to_numpy(d):
     dlist.sort()
     l1, l2 = zip(*dlist)
     l1_np = np.array(l1)
-    l2_np = np.array(l2)
+    l2_np = np.array(l2,dtype=float)
     
     return l1_np, l2_np
 
