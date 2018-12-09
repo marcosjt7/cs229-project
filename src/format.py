@@ -1,11 +1,14 @@
 import csv
 import numpy as np
 import collections
+import pickle
+import os
 
 '''CONSTANTS'''
 DEMO_FILE = '../data/demographic 5_5_15.txt'
 EGM_FILE = '../data/EGM_preprocessed.txt'
 METH_FILE = '../data/EGM-output online tool.csv'
+PICKLE_FILE = '../cache/data.pkl'
 
 '''load demographics data'''
 def load_demos(demo_file):
@@ -89,13 +92,22 @@ def load_BioAge1HO():
     
 
 def get_data():
-    demo_profiles = load_demos(DEMO_FILE)
-    egm_profiles = load_EGM(EGM_FILE)
-    intersect_dicts(demo_profiles, egm_profiles)
-    cancer_dict = filter_cancer(demo_profiles, egm_profiles)
-    patients, egm_matrix =  dict_to_numpy(egm_profiles)
-    patients, cancer_onehot = dict_to_numpy(cancer_dict)
-    return patients, egm_matrix, cancer_onehot
+    if os.path.exists(PICKLE_FILE):
+        #return pickled data
+        pkl_file = open(PICKLE_FILE, 'rb')
+        return pickle.load(pkl_file)
+    else:
+        #process data
+        demo_profiles = load_demos(DEMO_FILE)
+        egm_profiles = load_EGM(EGM_FILE)
+        intersect_dicts(demo_profiles, egm_profiles)
+        cancer_dict = filter_cancer(demo_profiles, egm_profiles)
+        patients, egm_matrix =  dict_to_numpy(egm_profiles)
+        patients, cancer_onehot = dict_to_numpy(cancer_dict)
+        #pickle and return
+        pkl_file = open(PICKLE_FILE, 'wb')
+        pickle.dump([patients, egm_matrix, cancer_onehot],pkl_file)
+        return patients, egm_matrix, cancer_onehot
 
 def  main():
     patients, egm_matrix, cancer_onehot = get_data()

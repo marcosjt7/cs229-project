@@ -19,13 +19,15 @@ from format import get_data
 K_CV_SPLITS = 5
 
 ######################### MODELS #########################
-def PCA_classifier(num_components):
+#based on example from Towards Data Science (https://towardsdatascience.com)
+#article "PCA using Python (scikit-learn)"
+def PCA_classifier(PCA_param):
     #PCR pipeline
     print "PCR:"
     steps = [
         ('scl', StandardScaler()),
-        ('pca', PCA(n_components=num_components)),
-        ('clf',LogisticRegression(solver='lbfgs', max_iter=1000, random_state=1))
+        ('pca', PCA(n_components=PCA_param)),
+        ('clf',LogisticRegression(solver='lbfgs', max_iter=1000)
     ]
     pcr_pipe = Pipeline(steps)
     return pcr_pipe
@@ -71,7 +73,7 @@ def test_model(model, X, y):
     avg_roc_auc /= K_CV_SPLITS
     avg_f1 /= K_CV_SPLITS
 
-    print avg_acc, avg_prec, avg_rec, avg_roc_auc, avg_f1
+    return avg_acc, avg_prec, avg_rec, avg_roc_auc, avg_f1
 
 ''''''''''''''''''''''''
 
