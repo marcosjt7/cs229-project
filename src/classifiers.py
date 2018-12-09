@@ -1,6 +1,9 @@
 #standard packages
 import numpy as np
 from timeit import default_timer as timer
+import matplotlib as mpl
+mpl.use('TkAgg')
+import matplotlib.pyplot as plt
 #sklearn utilities
 from sklearn.model_selection import ShuffleSplit
 from sklearn.model_selection import cross_val_score
@@ -13,6 +16,9 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import SGDClassifier
 from sklearn.svm import SVC
 from sklearn import tree
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import AdaBoostClassifier
+from sklearn.ensemble import RandomForestClassifier
 #sklearn evaluation metrics
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import precision_score
@@ -30,44 +36,55 @@ MAX_ITERS = 1500
 ######################### MODELS #########################
 #based on example from Towards Data Science (https://towardsdatascience.com)
 #article "PCA using Python (scikit-learn)"
+#parameters: PCA_param, which can be a float for variance retention
+#or a number of components to retain
 def PCA_classifier(PCA_param):
-    #PCR pipeline
-    print("PCR:")
     steps = [
         ('scl', StandardScaler()),
         ('pca', PCA(n_components=PCA_param)),
         ('clf', LogisticRegression(solver='lbfgs', max_iter=MAX_ITERS))
     ]
-    pcr_pipe = Pipeline(steps)
-    return pcr_pipe
+    return Pipeline(steps)
 
 def LR_classifier():
-    #simple logistic regression pipeline
-    print("LR:")
-    lr = LogisticRegression(solver='lbfgs', max_iter=MAX_ITERS)
-    return lr
+    return  LogisticRegression(solver='lbfgs', max_iter=MAX_ITERS)
 
-def sgd_classifier():
+#parameters: alpha (0, 0.0001, 0.1), penalty ('elasticnet','l1','l2')
+#tol? used 1e-13 w/ default alpha = 0.0001 and 1e-3 here
+def sgd_classifier(alpha_val, penalty_type):
     steps = [
         ('scl', StandardScaler()),
-        ('clf', SGDClassifier(max_iter=MAX_ITERS, tol=1e-13, penalty='l1',shuffle=False)
+        ('sgd', SGDClassifier(max_iter=MAX_ITERS, tol=1e-3, 
+            penalty=penalty_type, alpha = alpha_val, shuffle=False))
     ]
-    sgd_pipe = Pipeline(steps)
-    return sgd_pipe
+    return Pipeline(steps)
 
 def svm_classifier():
     steps = [
         ('scl', StandardScaler()),
-        ('clf', SVC(kernel='linear', shrinking=False)
+        ('svc', SVC(kernel='linear', shrinking=False))
     ]
-    svm_pipe = Pipeline(steps)
-    return svm_pipe
+    return Pipeline(steps)
 
 def tree_classifier():
-    print("Tree:")
-    steps = [('clf', tree.DecisionTreeClassifier())]
-    tree_pipe = Pipeline(steps)
-    return tree_pipe
+    return DecisionTreeClassifier()
+
+def adaBoost_classifier():
+    steps = [
+        ('scl', StandardScaler()),
+        ('ada', AdaboostClassifier(DecisionTreeClassifier(max_depth=2),
+            n_estimators=100, learning_rate=1.0, random_state=0))
+    ]
+    return Pipeline(steps)
+
+def random_forest_classifier():
+    steps = [
+        ('scl', StandardScaler()),
+        ('rfc', RandomForestClassifier(bootstrap=True, criterion='gini',
+            n_estimators=80, max_depth=3, max_features = 'aut0',
+            oob_score=True, random_state=0))
+    ]
+    return Pipeline(steps)
 ##########################################################
 
 def test_model(model, X, y):
@@ -83,12 +100,12 @@ def test_model(model, X, y):
         #learn and make predictions
         model.fit(X[train], y[train])
         y_pred = model.predict(X[test])
-        y_pos_probs = model.predict_proba(X[test])[:,1]
+        #y_pos_probs = model.predict_proba(X[test])[:,1]
         #evaluate performance
         avg_acc += accuracy_score(y[test], y_pred)
         avg_prec += precision_score(y[test], y_pred)
         avg_rec += recall_score(y[test], y_pred)
-        avg_roc_auc += roc_auc_score(y[test], y_pos_probs)
+        #avg_roc_auc += roc_auc_score(y[test], y_pos_probs)
         avg_f1 += f1_score(y[test], y_pred)
     #average performance scores
     avg_acc /= K_CV_SPLITS
@@ -97,21 +114,35 @@ def test_model(model, X, y):
     avg_roc_auc /= K_CV_SPLITS
     avg_f1 /= K_CV_SPLITS
 
-    return avg_acc, avg_prec, avg_rec, avg_roc_auc, avg_f1
+    #return [avg_acc, avg_prec, avg_rec, avg_f1, avg_roc_auc]
+    return [avg_acc, avg_prec, avg_rec, avg_f1]
 
 def main():
     #load_BioAge1HO()
     
     #getting and splitting data
-    print("parsing data")
+    print("parsing data...")
     patients, X, y = get_data()
+    print("done.")
     #training models with different parameters
+    #SGD
+    eval_scores = []
+    alphas = [0.0001, 0.001, 0.01, 0.1, 1, 10]
+    for alpha in alphas:
+        start_time = timer()
+        model = sgd_classifier(alpha, 'l1')
+        eval_scores.append(test_model(model, X, y))
+        end_time = timer()
+        print(end_time - start_time)
+    results = np.array(eval_scores)
+    accs = results[:,0]
+    precs = results[:,1]
+    recs = results[:,2]
+    f1s = results[:,3]
+    #rocs = results[:,4]
+    plt.plot(alphas, accs)
+    plt.show()
 
-    start_time = timer()
-    model = LR_classifier()
-    test_model(model, X, y)
-    end_time = timer()
-    runtime = start_time - end_time
    
 if __name__ == "__main__":
     main()
