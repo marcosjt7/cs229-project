@@ -19,6 +19,7 @@ from sklearn import tree
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import BaggingClassifier
 #sklearn evaluation metrics
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import precision_score
@@ -85,6 +86,15 @@ def random_forest_classifier():
             oob_score=True, random_state=0))
     ]
     return Pipeline(steps)
+
+def random_forest_classifier():
+    steps = [
+        ('scl', StandardScaler()),
+        ('bag', BaggingClassifier(DecisionTreeClassifier(max_depth=3), 
+            max_features=20000, max_samples=1.0, n_estimators=11, random_state=2))
+    ]
+    return Pipeline(steps)
+
 ##########################################################
 
 def test_model(model, X, y):
