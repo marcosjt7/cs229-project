@@ -87,7 +87,7 @@ def random_forest_classifier():
     ]
     return Pipeline(steps)
 
-def random_forest_classifier():
+def bagging_classifier():
     steps = [
         ('scl', StandardScaler()),
         ('bag', BaggingClassifier(DecisionTreeClassifier(max_depth=3), 
